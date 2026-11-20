@@ -28,8 +28,8 @@ df = pd.read_csv(f"data/team_{a.team:02d}_train.csv")
 # Team 14 sensor glitches found during EDA.
 bad = (
     (df["battery_v"] <= 0)
-    | (df["temp_c"] < -40)
-    | (df["rings_per_day"] > 30)
+    | (df["temp_c"] < -25)
+    | (df["rings_per_day"] > 40)
     | (df["wifi_rssi_dbm"] > 0)
     | (df["age_months"] < 0)
     | (df["days_left"] < 0)
