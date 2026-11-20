@@ -1,4 +1,5 @@
 __pycache__/
+.venv/
 *.pyc
 .ipynb_checkpoints/
 eda_team14.py
