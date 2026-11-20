@@ -1,0 +1,2 @@
+run_timestamp_utc,url,reading_count,single_requests,single_total_ms,batch_requests,batch_total_ms,speedup,single_predictions,batch_predictions,predictions_match,max_abs_difference
+2026-11-20T15:26:32Z,http://127.0.0.1:8000,400,400,886.293,1,10.61,83.535,400,400,True,0.0
