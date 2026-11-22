@@ -23,9 +23,9 @@ number. Use only your own team's file: every team's data, and the right answer, 
 |---|---|---|
 | `TEAMS.csv` | Team numbers and names | Find your number |
 | `data/` | Every team's `team_NN_train.csv` | Use only yours |
-| `train.py` | Loads the CSV, splits off validation rows, trains the network, saves it to `model/` | TODOs: glitch rule, linear baseline, normalisation |
+| `train.py` | Cleans the CSV, measures baselines, trains the network, saves it to `model/` | Run with `--sweep --compare-normalization` to reproduce Mission 2 experiments |
 | `app/model.py` | The network (5 → 32 → 32 → 1, ReLU), shared by training and the server | Change the layer sizes if you choose to |
-| `app/main.py` | The API: `GET /health`, `GET /model_info`, `POST /predict`, `POST /predict_batch` | TODOs: input ranges, stage timing, `/model_info` |
+| `app/main.py` | The API: `GET /health`, `GET /model_info`, `POST /predict`, `POST /predict_batch` | Validates sensor ranges, reports per-layer model size, and times each server stage |
 | `client/bench.py` | Times your API from outside: first request, p50/p95/p99 per stage | Run it, don't change it |
 | `.devcontainer/` | Makes Codespaces install everything on start | Leave it alone |
 | `model/` | Created by `train.py`: `model.pt` and `config.json` | **Commit it** |
@@ -46,7 +46,8 @@ number. Use only your own team's file: every team's data, and the right answer, 
    python train.py --team NN
    uvicorn app.main:app --host 0.0.0.0 --port 8000
    ```
-   The starter runs before you fill in any TODO. Its error will just be large.
+   Training prints the data-cleaning count, baseline MAEs and model MAEs, then saves the model.
+   Add `--sweep --compare-normalization` to run the Mission 2 experiments as well.
 5. **Ports** tab → right-click **8000** → **Port Visibility → Public**. Copy the address
    (`https://<name>-8000.app.github.dev`).
 6. On your laptop, open `<address>/health`, then `<address>/docs` to try `/predict` by hand.
@@ -78,8 +79,8 @@ gap.** Rotate the roles (Builder, Measurer, Skeptic, Scribe) so everyone builds 
 
 ### Mission 2: A small network, opened up
 - [ ] Predict, by hand, the parameters, float32 bytes and MACs of 5 → 32 → 32 → 1.
-- [ ] **Code (`train.py`):** normalise the inputs using the training rows only. Compare training with and without normalisation.
-- [ ] Train with hidden widths 4, 8, 16, 32 and 64, with one and two hidden layers (`--hidden 16` or `--hidden 32,32`). Plot validation MAE against parameters.
+- [ ] **Code (`train.py`):** normalise the inputs using the training rows only. Compare training with and without normalisation using `python train.py --team NN --hidden 32,32 --compare-normalization`.
+- [ ] Train with hidden widths 4, 8, 16, 32 and 64, with one and two hidden layers (`--hidden 16` or `--hidden 32,32`). Run `python train.py --team NN --hidden 32,32 --sweep` to train all ten models and plot validation MAE against parameters.
 - [ ] Compare training MAE with validation MAE for your chosen size. Is it overfitting?
 - [ ] Work out the per-layer table (parameters, bytes, MACs) by hand, then **code (`app/main.py`):** make `/model_info` compute it from the network itself.
 - [ ] Choose your final model and write down the MAE you expect on the company's 400 unseen readings.
@@ -97,7 +98,7 @@ gap.** Rotate the roles (Builder, Measurer, Skeptic, Scribe) so everyone builds 
 ESP32-S3: about 512 KB SRAM (roughly 300 KB free for your program), 8 MB PSRAM, 16 MB flash.
 - [ ] For your model: bytes for weights and biases as float32 and int8, and the largest activation memory needed at once.
 - [ ] **Code (`app/main.py`):** add `total_bytes_int8`, `fits_300kb_sram_f32` and `fits_300kb_sram_int8` to `/model_info`.
-- [ ] Use the same function to fill in the table for 5 → w → w → 1 at w = 32, 128, 256, 512 and 2048: parameters, float32 size, int8 size, fits in 300 KB SRAM (float32 and int8), fits in 8 MB PSRAM, MACs.
+- [ ] Use `python train.py --team NN --size-table` to apply the same model-size calculation to 5 → w → w → 1 at w = 32, 128, 256, 512 and 2048: parameters, float32 size, int8 size, SRAM/PSRAM fit and MACs.
 - [ ] Find the exact width where the weights stop fitting in 300 KB, at float32 and at int8.
 - [ ] Estimate one prediction's time on the board. State the speed you assume and where it came from.
 - [ ] Argue: should the doorbell call your server or run the model itself? Use latency, privacy, cost, power, and what happens when the Wi-Fi is down.
@@ -158,6 +159,8 @@ broken reading        -> HTTP 422 with the reason
 **Useful commands**
 ```
 python train.py --team NN --hidden 32,32 --epochs 1500
+python train.py --team NN --hidden 32,32 --sweep --compare-normalization
+python train.py --team NN --size-table
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 python client/bench.py --url <address> --n 200 [--no-keepalive]
 ```
