@@ -42,6 +42,17 @@ if a.size_table:
             f"{sizes['total_bytes_int8'] <= 8 * 1024 * 1024},"
             f"{width * 4},{sizes['total_macs']}"
         )
+    sram_limit_bytes = 300 * 1024
+    float32_width = next(
+        width for width in range(1, 3000)
+        if 4 * (width * width + 7 * width + 1) > sram_limit_bytes
+    )
+    int8_width = next(
+        width for width in range(1, 3000)
+        if width * width + 7 * width + 1 > sram_limit_bytes
+    )
+    print(f"float32_first_exceeds_300KiB,width={float32_width}")
+    print(f"int8_first_exceeds_300KiB,width={int8_width}")
     raise SystemExit(0)
 
 
