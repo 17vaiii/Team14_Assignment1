@@ -94,6 +94,20 @@ gap.** Rotate the roles (Builder, Measurer, Skeptic, Scribe) so everyone builds 
 - [ ] Run it again with `--no-keepalive`, and once inside the Codespace against `http://localhost:8000`. Explain both differences.
 - [ ] Time 400 single `/predict` calls against one `/predict_batch` call of 400 rows. Explain the difference.
 
+#### Recorded benchmark results (2026-11-20)
+
+Each run below attempted 200 requests; all 200 succeeded with zero failures. Round-trip percentiles exclude the first request (`i=0`), matching `client/bench.py`.
+
+| CSV | Scenario and where it ran | First round trip (ms) | Warm round trip p50 / p95 / p99 (ms) |
+|---|---|---:|---:|
+| `bench_20261120_152237.csv` | Public URL, keep-alive; run from Codespaces (not a laptop) | 203.356 | 10.468 / 22.285 / 130.567 |
+| `bench_20261120_152307.csv` | Public URL, no-keepalive; run from Codespaces (not a laptop) | 60.806 | 37.916 / 59.424 / 117.365 |
+| `bench_20261120_152330.csv` | `http://localhost:8000`, keep-alive; run inside Codespaces | 2.094 | 2.082 / 5.703 / 6.777 |
+
+The public-URL measurements include the Codespaces public port-forwarding/network path; the localhost measurement stays inside Codespaces. In these runs, warm p50 was 2.082 ms for localhost versus 10.468 ms for public keep-alive and 37.916 ms for public no-keepalive. These runs were not a controlled network comparison, so treat the differences as observed results rather than a precise estimate of forwarding overhead.
+
+The two 400-reading approaches used the same deterministic readings (`client/compare_batch_20261120_152633.csv`, run against `http://127.0.0.1:8000`): 400 individual `/predict` requests took **886.293 ms** total; one `/predict_batch` request took **10.610 ms**. All 400 predictions matched exactly (maximum absolute difference: 0.0), and the batch run was **83.535×** faster by total elapsed time. The batch request avoids repeating HTTP and request-handling overhead for each reading and processes all readings together.
+
 ### Mission 4: Would it fit inside the doorbell?
 ESP32-S3: about 512 KB SRAM (roughly 300 KB free for your program), 8 MB PSRAM, 16 MB flash.
 - [ ] For your model: bytes for weights and biases as float32 and int8, and the largest activation memory needed at once.
